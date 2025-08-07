@@ -6,122 +6,158 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f9f1;
+            background: #e6f2ec;
             margin: 0;
             padding: 0;
         }
 
         header {
-            background-color: #43a047;
+            background: linear-gradient(90deg, #43a047, #66bb6a);
             color: white;
-            padding: 20px 0;
+            padding: 25px 0;
             text-align: center;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         main {
-            padding: 30px;
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .records-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            overflow-x: auto;
         }
 
         .records-table {
             width: 100%;
-            max-width: 1100px;
-            margin: auto;
             border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            min-width: 1000px;
         }
 
         .records-table thead {
-            background-color: #e8f5e9;
+            background-color: #e0f2f1;
         }
 
         .records-table th, .records-table td {
-            padding: 15px;
-            border-bottom: 1px solid #ddd;
+            padding: 16px 20px;
             text-align: left;
+            border-bottom: 1px solid #ddd;
         }
 
         .records-table th {
-            color: #2e7d32;
+            color: #1b5e20;
+            font-weight: 600;
+        }
+
+        .records-table tr {
+            transition: background-color 0.3s ease;
         }
 
         .records-table tr:hover {
-            background-color: #f1f1f1;
+            background-color: #f1f8e9;
+            cursor: pointer;
         }
 
         .no-records {
             text-align: center;
             font-size: 18px;
             color: #888;
-            padding: 40px 0;
+            padding: 50px;
         }
 
         footer {
             text-align: center;
             padding: 20px;
-            background-color: #e0e0e0;
-            color: #555;
+            background-color: #dcedc8;
+            color: #33691e;
             font-size: 14px;
-            margin-top: 40px;
+            margin-top: 60px;
+        }
+
+        @media (max-width: 768px) {
+            .records-table th, .records-table td {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            header {
+                font-size: 24px;
+            }
+
+            main {
+                padding: 20px 10px;
+            }
         }
     </style>
+
+  
 </head>
 <body>
 
 <header>
-    🐶 My Pet Medical Records
+    🐾 My Pet Medical Records
 </header>
 
 <main>
     {% if records %}
-        <table class="records-table">
-            <thead>
-                <tr>
-                    <th>Record Id</th>
-                    <th>Pet</th>
-                    <th>Veterinarian</th>
-                    <th>Visit Date</th>
-                    <th>Diagnosis</th>
-                    <th>Treatment</th>
-                    <th>Prescription</th>
-                    <th>Vaccination</th>
-                    <th>Notes</th>
-                    <th>Recorded On</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for record in records %}
-                  <tr>
-             
-                        <td>{{ record.record_id }}</td>
-                        <td>{{ record.pet.name }}</td>
-                        <td>{{ record.vaterian.get_full_name|default:record.vaterian.username }}</td>
-                        <td>{{ record.visit_date }}</td>
-                        <td>{{ record.diagnosis }}</td>
-                        <td>{{ record.treatment }}</td>
-                        <td>{{ record.prescription }}</td>
-                        <td>{{ record.vaccination_date }}</td>
-                        <td>{{ record.notes|default:"N/A" }}</td>
-                        <td>{{ record.created_at|date:"Y-m-d H:i" }}</td>
+        <div class="records-container">
+            <table class="records-table">
+                <thead>
+                    <tr>
+                        <th>Record ID</th>
+                        <th>Pet</th>
+                        <th>Veterinarian</th>
+                        <th>Visit Date</th>
+                        <th>Diagnosis</th>
+                        <th>Treatment</th>
+                        <th>Prescription</th>
+                        <th>Vaccination</th>
+                        <th>Notes</th>
+                        <th>Recorded On</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                       <tr data-id="{{ record.record_id }}" onclick="goToDetail(this)" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                            <td>{{ record.record_id }}</td>
+                            <td>{{ record.pet.name }}</td>
+                            <td>{{ record.vaterian.get_full_name|default:record.vaterian.username }}</td>
+                            <td>{{ record.visit_date }}</td>
+                            <td>{{ record.diagnosis }}</td>
+                            <td>{{ record.treatment }}</td>
+                            <td>{{ record.prescription }}</td>
+                            <td>{{ record.vaccination_date }}</td>
+                            <td>{{ record.notes|default:"N/A" }}</td>
+                            <td>{{ record.created_at|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
         <div class="no-records">
-            No records found for your pets.
+            😿 No records found for your pets.
         </div>
     {% endif %}
 </main>
 
 <footer>
-    &copy; {{ now|date:"Y" }} Pawsitive Care Clinic – Compassionate Care for Pets.
+    &copy; {{ now|date:"Y" }} Pawsitive Care Clinic — Compassionate Care for Pets
 </footer>
 
 </body>
 </html>
+  <script>
+        function goToDetail(row) {
+    const recordId = row.getAttribute('data-id');
+    if (recordId) {
+      window.location.href = `/records/record/${recordId}/`;
+    }
+  }
+    </script>

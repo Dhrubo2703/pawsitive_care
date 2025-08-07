@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Update Record - {{ record.pet.name }}</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      align-items: center;
+    }
+    main {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      padding: 30px 40px;
+      max-width: 480px;
+      width: 90%;
+      animation: fadeIn 0.6s ease forwards;
+    }
+    h2 {
+      color: #2e7d32;
+      text-align: center;
+      margin-bottom: 25px;
+      user-select: none;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    form p {
+      margin: 0;
+    }
+    input[type="text"],
+    input[type="date"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #4caf50;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+      font-family: inherit;
+    }
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #1b5e20;
+      outline: none;
+      box-shadow: 0 0 8px #81c784;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    .form-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    button[type="submit"] {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 12px 28px;
+      font-weight: 700;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button[type="submit"]:hover {
+      background-color: #388e3c;
+    }
+    a.cancel-link {
+      padding: 12px 28px;
+      color: #388e3c;
+      border: 2px solid #388e3c;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    a.cancel-link:hover {
+      background-color: #388e3c;
+      color: white;
+    }
+    /* Simple fade in */
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h2>Update Medical Record – {{ record.pet.name }}</h2>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {{ form.as_p }}
+
+      <div class="form-buttons">
+        <button type="submit">Save Changes</button>
+        <a href="{% url 'records:record_detail' record.record_id %}" class="cancel-link">Cancel</a>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

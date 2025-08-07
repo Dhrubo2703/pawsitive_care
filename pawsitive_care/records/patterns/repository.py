@@ -12,3 +12,5 @@ class MedicalRecordRepository:
 
     def create_record(self, record_data):
         return PetsMedicalRecord.objects.create(**record_data)
+    def get_records_by_pet_id(self, pet_id):
+        return PetsMedicalRecord.objects.filter(pet_id=pet_id).select_related('pet', 'vaterian')
