@@ -1,10 +1,6 @@
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
+# Import all views
+from .views.appointment_views import *
+from .views.vet_views import *
 
-# Create your views here.
-
-@login_required
-def appointment_list(request):
-    return render(request, 'appoinments/appointment_list.html', {
-        'title': 'Appointments'
-    })
+# This file now imports all views from their respective modules
+# The actual view implementations have been moved to the views/ directory

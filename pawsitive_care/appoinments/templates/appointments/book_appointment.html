@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Book Appointment{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .vet-card {
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+    .vet-card:hover {
+        transform: translateY(-5px);
+    }
+    .vet-card.selected {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+    .service-card {
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    .service-card:hover {
+        transform: translateY(-5px);
+    }
+    .service-card.selected {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40,167,69,.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h4 mb-0">Book New Appointment</h1>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="appointmentForm">
+                        {% csrf_token %}
+                        
+                        <!-- Step 1: Pet Selection -->
+                        <div class="mb-4">
+                            <h5>1. Select Your Pet</h5>
+                            <select name="pet" class="form-select" required>
+                                <option value="">Choose a pet...</option>
+                                {% for pet in pets %}
+                                    <option value="{{ pet.id }}" data-species="{{ pet.species }}" data-age="{{ pet.age }}">
+                                        {{ pet.name }} ({{ pet.species }}, {{ pet.age }} years)
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Step 2: Service Selection -->
+                        <div class="mb-4">
+                            <h5>2. Select Service</h5>
+                            <div class="row">
+                                {% for service in services %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card service-card h-100" data-service-id="{{ service.id }}">
+                                            <div class="card-body">
+                                                <h6 class="card-title">{{ service.name }}</h6>
+                                                <p class="card-text small">{{ service.description }}</p>
+                                                {% if service.base_price %}
+                                                    <p class="card-text text-primary">Starting from ${{ service.base_price }}</p>
+                                                {% endif %}
+                                                <small class="text-muted">Duration: {{ service.duration }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                                <input type="hidden" name="service_type" id="selectedService" required>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Veterinarian Selection -->
+                        <div class="mb-4">
+                            <h5>3. Choose Your Veterinarian</h5>
+                            <div class="row">
+                                {% for vet in vets %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card vet-card h-100" data-vet-id="{{ vet.id }}" onclick="selectVeterinarian(this, '{{ vet.id }}')">
+                                            <div class="card-body">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    {% if vet.profile_photo %}
+                                                        <img src="{{ vet.profile_photo.url }}" alt="Dr. {{ vet.get_full_name }}"
+                                                             class="rounded-circle me-2" style="width: 50px; height: 50px; object-fit: cover;">
+                                                    {% endif %}
+                                                    <div>
+                                                        <h6 class="card-title mb-0">Dr. {{ vet.get_full_name }}</h6>
+                                                        <small class="text-muted">{{ vet.specialization }}</small>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <span class="badge bg-success">Available</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                                <input type="hidden" name="veterinarian" id="selectedVet" required>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Branch Selection -->
+                        <div class="mb-4">
+                            <h5>4. Select Clinic Branch</h5>
+                            <select name="clinic_branch" class="form-select" required>
+                                <option value="">Choose a branch...</option>
+                                {% for branch in branches %}
+                                    <option value="{{ branch.id }}">
+                                        {{ branch.name }} - {{ branch.address }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Step 5: Date and Time Selection -->
+                        <div class="mb-4">
+                            <h5>5. Choose Date & Time</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <input type="text" name="date_time" id="dateTimePicker" 
+                                           class="form-control" placeholder="Select date and time" required>
+                                </div>
+                                <div class="col-md-6" id="availableSlots">
+                                    <!-- Available slots will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 6: Additional Notes -->
+                        <div class="mb-4">
+                            <h5>6. Additional Notes (Optional)</h5>
+                            <textarea name="notes" class="form-control" rows="3" 
+                                      placeholder="Any special instructions or symptoms..."></textarea>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Preview Appointment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 2rem;">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Appointment Summary</h5>
+                </div>
+                <div class="card-body" id="appointmentPreview">
+                    <p class="text-muted text-center">
+                        Select options to see the appointment summary
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date picker
+        flatpickr("#dateTimePicker", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            altInput: true,
+            altFormat: "Y-m-d H:i",
+            minDate: "today",
+            minTime: "09:00",
+            maxTime: "17:00",
+            time_24hr: true,
+            disable: [
+                function(date) {
+                    return (date.getDay() === 0 || date.getDay() === 6);
+                }
+            ]
+        });
+
+        // Service selection
+        document.querySelectorAll('.service-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                document.getElementById('selectedService').value = this.dataset.serviceId;
+                updatePreview();
+            });
+        });
+
+        function selectVeterinarian(card, vetId) {
+            document.querySelectorAll('.vet-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            document.getElementById('selectedVet').value = vetId;
+            updateAvailableSlots();
+            updatePreview();
+        }
+
+        // Veterinarian selection - backup click handler
+        document.querySelectorAll('.vet-card').forEach(card => {
+            card.addEventListener('click', function() {
+                selectVeterinarian(this, this.dataset.vetId);
+                updatePreview();
+            });
+        });
+
+        // Update available slots when date or vet changes
+        function updateAvailableSlots() {
+            const vetId = document.getElementById('selectedVet').value;
+            const date = document.getElementById('dateTimePicker').value.split(' ')[0];
+            
+            if (vetId && date) {
+                fetch(`{% url 'appointments:get_available_slots' %}?vet_id=${vetId}&date=${date}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const slotsContainer = document.getElementById('availableSlots');
+                        slotsContainer.innerHTML = data.slots.map(slot => 
+                            `<button type="button" class="btn btn-outline-primary m-1" onclick="selectSlot('${slot}')">
+                                ${slot}
+                            </button>`
+                        ).join('');
+                    });
+            }
+        }
+
+        // Form validation before submit
+        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const pet = document.querySelector('select[name="pet"]').value;
+            const service = document.getElementById('selectedService').value;
+            const vet = document.getElementById('selectedVet').value;
+            const branch = document.querySelector('select[name="clinic_branch"]').value;
+            const datetime = document.getElementById('dateTimePicker').value;
+
+            if (!pet || !service || !vet || !branch || !datetime) {
+                alert('Please fill in all required fields');
+                return false;
+            }
+
+            this.submit();
+        });
+
+        // Update preview panel
+        function updatePreview() {
+            const pet = document.querySelector('select[name="pet"] option:checked');
+            const service = document.querySelector('.service-card.selected');
+            const vet = document.querySelector('.vet-card.selected');
+            const branch = document.querySelector('select[name="clinic_branch"] option:checked');
+            const datetime = document.getElementById('dateTimePicker').value;
+
+            if (pet && service && vet && branch && datetime) {
+                document.getElementById('appointmentPreview').innerHTML = `
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Pet:</dt>
+                        <dd class="col-sm-8">${pet.text}</dd>
+                        
+                        <dt class="col-sm-4">Service:</dt>
+                        <dd class="col-sm-8">${service.querySelector('.card-title').textContent}</dd>
+                        
+                        <dt class="col-sm-4">Veterinarian:</dt>
+                        <dd class="col-sm-8">${vet.querySelector('.card-title').textContent}</dd>
+                        
+                        <dt class="col-sm-4">Branch:</dt>
+                        <dd class="col-sm-8">${branch.text}</dd>
+                        
+                        <dt class="col-sm-4">Date & Time:</dt>
+                        <dd class="col-sm-8">${datetime}</dd>
+                    </dl>
+                `;
+            }
+        }
+
+        // Event listeners for preview updates
+        ['pet', 'clinic_branch'].forEach(field => {
+            document.querySelector(`select[name="${field}"]`).addEventListener('change', updatePreview);
+        });
+        document.getElementById('dateTimePicker').addEventListener('change', () => {
+            updateAvailableSlots();
+            updatePreview();
+        });
+    });
+
+    function selectSlot(time) {
+        const date = document.getElementById('dateTimePicker').value.split(' ')[0];
+        document.getElementById('dateTimePicker').value = `${date} ${time}`;
+        updatePreview();
+    }
+</script>
+{% endblock %}
