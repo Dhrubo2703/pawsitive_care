@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>{{ title }} - Pawsitive Care</title>
+{% extends 'accounts/base.html' %}
+
+{% block title %}Records{% endblock %}
+
+{% block content %}
   <style>
     /* Reset and base */
     * {
@@ -185,16 +185,17 @@
 
 <main>
   <form method="get" class="search-form" onsubmit="return validateSearch()">
-    <label for="pet_id">Search by Pet ID:</label>
-    <input type="number" name="pet_id" id="pet_id" placeholder="Enter Pet ID" min="1" />
+    <label for="pet_id">Search Record:</label>
+    <input type="number" name="query" id="query" placeholder="Enter Pet ID/Phone Number" min="1" />
     <button type="submit">Search</button>
   </form>
-
   {% if records %}
   <table class="records-table" id="recordsTable">
     <thead>
       <tr>
+        <th>Record ID</th>
         <th>Pet Name</th>
+        <th>Owner Phone</th>
         <th>Veterinarian</th>
         <th>Visit Date</th>
         <th>Treatment</th>
@@ -208,7 +209,9 @@
     <tbody>
       {% for record in records %}
       <tr data-id="{{ record.record_id }}" onclick="goToDetail(this)" tabindex="0" onkeypress="handleKeyPress(event, this)">
+        <td>{{ record.record_id }}</td>
         <td>{{ record.pet.name }}</td>
+        <td>{{ record.pet.owner.phone}}</td>
         <td>{{ record.vaterian.get_full_name|default:record.vaterian.username }}</td>
         <td>{{ record.visit_date }}</td>
         <td>{{ record.treatment }}</td>
@@ -251,15 +254,12 @@
 
   // Validate search input before submitting
   function validateSearch() {
-    const petIdInput = document.getElementById('pet_id');
-    if (petIdInput.value && petIdInput.value <= 0) {
-      alert('Please enter a valid Pet ID (greater than zero).');
-      petIdInput.focus();
-      return false;
+     const queryInput = document.getElementById('query');
+    return true; // Allow empty to show all records
     }
-    return true;
-  }
+    
 </script>
 
 </body>
 </html>
+{% endblock %}

@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <title>Pawsitive Care | Add Pet Medical Record</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2&display=swap" rel="stylesheet">
+{% extends 'accounts/base.html' %}
+
+{% block title %}Records{% endblock %}
+
+{% block content %}
     <style>
         body {
             font-family: 'Baloo 2', cursive, sans-serif;
@@ -15,26 +13,11 @@
         }
 
         /* Clinic Name Header */
-        .clinic-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 28px;
-            font-weight: bold;
-            color: #004d40;
-            background-color: #e0f2f1;
-            padding: 14px 0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            z-index: 1000;
-            user-select: none;
-        }
-
+      
         .form-container {
             background: #ffffff;
-            max-width: 700px;
-            width: 90%;
+            max-width: 100%;
+            width: 100%;
             margin: 120px auto 40px auto; /* Extra top margin to avoid header overlap */
             padding: 35px 45px 45px 45px;
             border-radius: 20px;
@@ -218,12 +201,14 @@
 
         
     </style>
-</head>
-<body>
 
-<header class="clinic-header">
-    🐾 Pawsitive Care
-</header>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+
+
+
 
 <div class="form-container">
     <h2>🐾 Add Pet Medical Record</h2>
@@ -243,13 +228,16 @@
 <div id="successModal" class="modal">
   <div class="modal-content">
     <p>✔️ Record added successfully!</p>
-    <button onclick="closeModal()">OK</button>
+    <button onclick="goToRecord()">OK</button>
   </div>
 </div>
 <script>
     window.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('successModal').style.display = 'flex';
-    });
+        document.getElementById('successModal').style.display = 'flex'});
+        function goToRecord() {
+            window.location.href = "{% url 'records:record_detail' record_id %}";
+        }
+    ;
 </script>
 {% endif %}
 
@@ -296,8 +284,10 @@
     </form>
 </div>
 
-<!-- Toast Notification -->
-<div id="toast" class="toast"></div>
+
+
+</body>
+</html>
 
 <script>
     const petSelect = document.getElementById('pet');
@@ -313,7 +303,7 @@
     function validateForm() {
         const requiredFields = [
             'pet', 'visit_date', 'treatment',
-            'prescription', 'vaccination_date', 'diagnosis'
+            'prescription', 'diagnosis'
         ];
 
         for (let field of requiredFields) {
@@ -352,6 +342,4 @@
 }
 
 </script>
-
-</body>
-</html>
+{% endblock %}

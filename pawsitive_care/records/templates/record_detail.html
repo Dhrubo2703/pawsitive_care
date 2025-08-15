@@ -1,31 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>{{ title }} - Pawsitive Care</title>
+{% extends 'accounts/base.html' %}
+
+{% block title %}Records{% endblock %}
+
+{% block content %}
   <style>
     /* Base Reset */
     *, *::before, *::after {
       box-sizing: border-box;
     }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #e3f2fd, #ffffff);
-      margin: 0;
-      padding: 0;
-      color: #333;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    align-items: center;
+  }
+    
 
     header {
       background-color: #43a047;
+      
       color: #fff;
-      padding: 25px 15px;
+      padding: 20px 0;
       font-size: 32px;
-      font-weight: 900;
+      font-weight: BOLD;
       letter-spacing: 1.3px;
       text-align: center;
       width: 100%;
@@ -35,14 +32,13 @@
 
     main {
       background: white;
-      border-radius: 16px;
-      box-shadow: 0 12px 35px rgba(0,0,0,0.12);
-      max-width: 900px;
-      width: 90%;
-      margin: 30px 0 60px;
-      padding: 30px 40px;
+      max-width: 100%;
+      width: 100%;
+      margin: 0;;
+      padding: 0;
       animation: fadeInUp 0.7s ease forwards;
     }
+    
 
     /* Animate on load */
     @keyframes fadeInUp {
@@ -254,10 +250,55 @@
         width: 100%;
         justify-content: center;
       }
+      
     }
+  @media print {
+  /* Hide buttons and navigation */
+  header, footer, .btn-group {
+    display: none !important;
+  }
+
+  /* Keep main spacing so layout isn't broken */
+  body {
+    background: white !important;
+  }
+  main {
+    margin: 10px auto !important;
+    padding: 15px !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Reduce font size slightly to fit one page */
+  main, table, td, th, span, strong {
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Table spacing adjustments */
+  table {
+    border-spacing: 0 !important;
+  }
+  td, th {
+    padding: 6px 8px !important;
+  }
+
+  /* Reduce image size */
+  .record-photo img {
+    max-height: 150px !important;
+  }
+
+  /* Prevent breaking in awkward places */
+  main, table, tr, td {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+
   </style>
-</head>
-<body>
+
 
 <header>
   🐾 Record Details – {{ record.pet.name }}
@@ -352,3 +393,4 @@
 
 </body>
 </html>
+{% endblock %}

@@ -7,15 +7,19 @@ from django.contrib.auth import get_user_model
 from django.http import HttpResponseForbidden
 from .patterns.factory import MedicalRecordFactory
 from .patterns.repository import MedicalRecordRepository
-from .patterns.observer import RecordObserver
+from .patterns.observer import RecordObserver,EmailNotificationObserver
 from .form import PetsMedicalRecordForm
 from django.utils import timezone
+from django.db.models import Q
+from django.urls import reverse
+
 
 User = get_user_model()
 
 repository = MedicalRecordRepository()
 factory = MedicalRecordFactory()
-observer = RecordObserver()
+record_observer = RecordObserver()
+record_observer.subscribe(EmailNotificationObserver())
 
 @login_required
 def add_record(request):
@@ -23,13 +27,9 @@ def add_record(request):
         try:
             record_data = factory.create(request.POST, request.user)
             record = repository.create_record(record_data)
-            observer.notify(record)
+            record_observer.notify(record)
 
-            return render(request, 'add_record.html', {
-                'success': True,
-                'pets': Pet.objects.all(),
-                'user': request.user
-            })
+            return redirect(f"{reverse('records:add_record')}?success=1&record_id={record.record_id}")
 
         except Pet.DoesNotExist:
             messages.error(request, "Selected pet does not exist.")
@@ -37,17 +37,22 @@ def add_record(request):
             messages.error(request, f"Error adding record: {str(e)}")
 
     return render(request, 'add_record.html', {
+        'success': request.GET.get('success') == '1',
+        'record_id': request.GET.get('record_id'),
         'pets': Pet.objects.all(),
         'user': request.user
     })
 
-@login_required
 def view_records(request):
-    pet_id = request.GET.get('pet_id')
-    if pet_id:
-        records = PetsMedicalRecord.objects.filter(pet__id=pet_id)
-    else:
-        records = PetsMedicalRecord.objects.all()
+    query = request.GET.get('query')
+    records = PetsMedicalRecord.objects.all()
+
+    if query:
+        # Try matching both pet ID and phone number
+        records = records.filter(
+            Q(pet__id__iexact=query) |
+            Q(pet__owner__phone__icontains=query)
+        )
 
     context = {
         'records': records,
