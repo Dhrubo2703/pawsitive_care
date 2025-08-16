@@ -5,7 +5,7 @@ from pets.models import Pet
 from .models import PetsMedicalRecord
 from django.contrib.auth import get_user_model
 from django.http import HttpResponseForbidden
-from .patterns.factory import MedicalRecordFactory
+from .patterns.factory import NewMedicalRecordFactory
 from .patterns.repository import MedicalRecordRepository
 from .patterns.observer import RecordObserver,EmailNotificationObserver
 from .form import PetsMedicalRecordForm
@@ -17,7 +17,7 @@ from django.urls import reverse
 User = get_user_model()
 
 repository = MedicalRecordRepository()
-factory = MedicalRecordFactory()
+factory = NewMedicalRecordFactory()
 record_observer = RecordObserver()
 record_observer.subscribe(EmailNotificationObserver())
 
