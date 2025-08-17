@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (
     RegisterView, CustomLoginView, CustomLogoutView, profile_view,
     admin_dashboard, vet_dashboard, staff_dashboard, client_dashboard,
-    AdminOnlyView, VetOnlyView, AdminOrVetView, user_management, promote_clients
+    AdminOnlyView, VetOnlyView, AdminOrVetView, user_management, promote_clients,
+    add_veterinarian
 )
 
 app_name = 'accounts'
@@ -27,4 +28,5 @@ urlpatterns = [
     # User management (admin only)
     path('users/', user_management, name='user_management'),
     path('promote-clients/', promote_clients, name='promote_clients'),
+    path('veterinarian/add/', add_veterinarian, name='add_veterinarian'),
 ]

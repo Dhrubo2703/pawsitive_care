@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,13 +15,37 @@
       min-height: 100vh;
       align-items: center;
     }
+=======
+{% extends 'accounts/base.html' %}
+
+{% block title %}Records{% endblock %}
+
+{% block content %}
+
+  <style>
+   /*replacement of body*/
+   .page-wrapper {
+  display: flex;
+  width: 90%;
+  max-width: 90%;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 100px); /* leave space for header */
+  background: #f0f4f8;
+}
+>>>>>>> 085ee6d73080e46e31c3330c02e9006ed2a4d67e
     main {
       background: white;
       border-radius: 12px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       padding: 30px 40px;
       max-width: 480px;
+<<<<<<< HEAD
       width: 90%;
+=======
+      width: 80%;
+      max-width: 80%;
+>>>>>>> 085ee6d73080e46e31c3330c02e9006ed2a4d67e
       animation: fadeIn 0.6s ease forwards;
     }
     h2 {
@@ -101,10 +126,21 @@
       to {opacity: 1; transform: translateY(0);}
     }
   </style>
+<<<<<<< HEAD
 </head>
 <body>
   <main>
     <h2>Update Medical Record – {{ record.pet.name }}</h2>
+=======
+
+<body>
+  <div class="page-wrapper">
+  <main>
+    <h2>Update Medical Record – {{ record.pet.name }}
+  <small style="color: #555; font-size: 0.85em;">
+    (Record id- #{{ record.record_id }})
+  </small></h2>
+>>>>>>> 085ee6d73080e46e31c3330c02e9006ed2a4d67e
 
     <form method="post" novalidate>
       {% csrf_token %}
@@ -116,5 +152,10 @@
       </div>
     </form>
   </main>
+<<<<<<< HEAD
 </body>
 </html>
+=======
+  </div>
+{%endblock %}
+>>>>>>> 085ee6d73080e46e31c3330c02e9006ed2a4d67e

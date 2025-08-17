@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'communication',
     'inventory',
     'records',
+    
 ]
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
@@ -168,5 +169,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'nsupawsitivecare@gmail.com'  # Replace with your actual Gmail address
-EMAIL_HOST_PASSWORD = 'xgsh jsgk kiwi mcsg'  # Your app password (not your Gmail login password)
+EMAIL_HOST_USER = '023sowrov@gmail.com'  # Your Gmail
+EMAIL_HOST_PASSWORD = 'xgqw liwk seim qhvu'    # App password from Google
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+#For mailing
+# settings.py

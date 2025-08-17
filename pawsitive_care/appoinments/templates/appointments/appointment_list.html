@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Appointments - {{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Appointments</h1>
+        <a href="{% url 'appointments:book_appointment' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Book New Appointment
+        </a>
+    </div>
+
+    <!-- Upcoming Appointments -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">Upcoming Appointments</h2>
+        </div>
+        <div class="card-body">
+            {% if upcoming_appointments %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Pet</th>
+                                <th>Service</th>
+                                <th>Veterinarian</th>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in upcoming_appointments %}
+                                <tr>
+                                    <td>
+                                        <img src="{{ appointment.pet.photo.url }}" alt="{{ appointment.pet.name }}" 
+                                             class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                        {{ appointment.pet.name }}
+                                    </td>
+                                    <td>{{ appointment.service_type.name }}</td>
+                                    <td>Dr. {{ appointment.veterinarian.get_full_name }}</td>
+                                    <td>{{ appointment.date_time|date:"F j, Y P" }}</td>
+                                    <td>
+                                        <span class="badge {% if appointment.status == 'confirmed' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ appointment.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'appointments:appointment_summary' appointment.id %}" 
+                                               class="btn btn-sm btn-info">
+                                                <i class="fas fa-info-circle"></i>
+                                            </a>
+                                            {% if appointment.status != 'cancelled' %}
+                                                <a href="{% url 'appointments:reschedule_appointment' appointment.id %}" 
+                                                   class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                </a>
+                                                <form action="{% url 'appointments:cancel_appointment' appointment.id %}" 
+                                                      method="post" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-danger"
+                                                            onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted text-center my-3">No upcoming appointments</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Past Appointments -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h2 class="h5 mb-0">Past Appointments</h2>
+        </div>
+        <div class="card-body">
+            {% if past_appointments %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Pet</th>
+                                <th>Service</th>
+                                <th>Veterinarian</th>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in past_appointments %}
+                                <tr>
+                                    <td>
+                                        <img src="{{ appointment.pet.photo.url }}" alt="{{ appointment.pet.name }}" 
+                                             class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                        {{ appointment.pet.name }}
+                                    </td>
+                                    <td>{{ appointment.service_type.name }}</td>
+                                    <td>Dr. {{ appointment.veterinarian.get_full_name }}</td>
+                                    <td>{{ appointment.date_time|date:"F j, Y P" }}</td>
+                                    <td>
+                                        <span class="badge {% if appointment.status == 'completed' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {{ appointment.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'appointments:appointment_summary' appointment.id %}" 
+                                               class="btn btn-sm btn-info">
+                                                <i class="fas fa-info-circle"></i>
+                                            </a>
+                                            {% if appointment.status == 'completed' and not appointment.appointmentfeedback %}
+                                                <a href="{% url 'appointments:submit_feedback' appointment.id %}" 
+                                                   class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-star"></i> Rate
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted text-center my-3">No past appointments</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add to calendar functionality can be implemented here
+    // You can use Google Calendar API or other calendar integrations
+</script>
+{% endblock %}

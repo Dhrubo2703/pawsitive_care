@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Appointment Summary{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h1 class="h4 mb-0">Appointment Summary</h1>
+            <a href="{% url 'appointments:appointment_list' %}" class="btn btn-light btn-sm">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Appointment Details -->
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Appointment Details</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <dl>
+                                        <dt>Status</dt>
+                                        <dd>
+                                            <span class="badge {% if appointment.status == 'confirmed' %}bg-success
+                                                       {% elif appointment.status == 'pending' %}bg-warning
+                                                       {% elif appointment.status == 'cancelled' %}bg-danger
+                                                       {% else %}bg-secondary{% endif %}">
+                                                {{ appointment.status|title }}
+                                            </span>
+                                        </dd>
+
+                                        <dt>Date & Time</dt>
+                                        <dd>{{ appointment.date_time|date:"F j, Y P" }}</dd>
+
+                                        <dt>Service Type</dt>
+                                        <dd>{{ appointment.service_type.name }}</dd>
+
+                                        <dt>Duration</dt>
+                                        <dd>{{ appointment.service_type.duration }}</dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <dl>
+                                        <dt>Clinic Branch</dt>
+                                        <dd>{{ appointment.clinic_branch.name }}</dd>
+
+                                        <dt>Address</dt>
+                                        <dd>{{ appointment.clinic_branch.address }}</dd>
+
+                                        <dt>Contact</dt>
+                                        <dd>{{ appointment.clinic_branch.contact_number }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+
+                            {% if appointment.notes %}
+                                <div class="mt-3">
+                                    <h6>Additional Notes:</h6>
+                                    <p class="text-muted">{{ appointment.notes }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Pet Information -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Pet Information</h5>
+                            <div class="d-flex align-items-center mb-3">
+                                {% if appointment.pet.photo %}
+                                    <img src="{{ appointment.pet.photo.url }}" alt="{{ appointment.pet.name }}"
+                                         class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover;">
+                                {% endif %}
+                                <div>
+                                    <h4 class="mb-1">{{ appointment.pet.name }}</h4>
+                                    <p class="text-muted mb-0">
+                                        {{ appointment.pet.species }} • {{ appointment.pet.breed }} • 
+                                        {{ appointment.pet.age }} years old
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Veterinarian Information -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Veterinarian Information</h5>
+                            <div class="d-flex align-items-center">
+                                {% if appointment.veterinarian.profile_photo %}
+                                    <img src="{{ appointment.veterinarian.profile_photo.url }}" 
+                                         alt="Dr. {{ appointment.veterinarian.get_full_name }}"
+                                         class="rounded-circle me-3" 
+                                         style="width: 80px; height: 80px; object-fit: cover;">
+                                {% endif %}
+                                <div>
+                                    <h4 class="mb-1">Dr. {{ appointment.veterinarian.get_full_name }}</h4>
+                                    <p class="text-muted mb-2">{{ appointment.veterinarian.specialization }}</p>
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="fas fa-star text-warning"></i>
+                                            <span>4.5</span>
+                                        </div>
+                                        <span class="text-muted">500+ consultations</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Sidebar -->
+                <div class="col-md-4">
+                    <!-- Action Buttons -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Actions</h5>
+                            
+                            {% if appointment.status == 'confirmed' or appointment.status == 'pending' %}
+                                <a href="{% url 'appointments:reschedule_appointment' appointment.id %}" 
+                                   class="btn btn-warning btn-lg w-100 mb-2">
+                                    <i class="fas fa-calendar-alt me-2"></i> Reschedule
+                                </a>
+                                
+                                <form action="{% url 'appointments:cancel_appointment' appointment.id %}" 
+                                      method="post" class="d-inline w-100">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-lg w-100 mb-2"
+                                            onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                                        <i class="fas fa-times me-2"></i> Cancel
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            {% if appointment.status == 'completed' and not appointment.appointmentfeedback %}
+                                <a href="{% url 'appointments:submit_feedback' appointment.id %}" 
+                                   class="btn btn-primary btn-lg w-100 mb-2">
+                                    <i class="fas fa-star me-2"></i> Leave Feedback
+                                </a>
+                            {% endif %}
+                            
+                            <button class="btn btn-outline-primary btn-lg w-100" onclick="addToCalendar()">
+                                <i class="fas fa-calendar-plus me-2"></i> Add to Calendar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Reminders -->
+                    {% if appointment.status == 'confirmed' %}
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Reminders</h5>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="emailReminder" checked>
+                                    <label class="form-check-label" for="emailReminder">
+                                        Email Reminder (24h before)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="smsReminder">
+                                    <label class="form-check-label" for="smsReminder">
+                                        SMS Reminder (1h before)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Important Information -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Important Information</h5>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2">
+                                    <i class="fas fa-clock text-primary me-2"></i>
+                                    Please arrive 10 minutes early
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-file-medical text-primary me-2"></i>
+                                    Bring medical records
+                                </li>
+                                <li>
+                                    <i class="fas fa-exclamation-circle text-primary me-2"></i>
+                                    Cancel 24h in advance
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addToCalendar() {
+    const event = {
+        title: `Vet Appointment - ${appointment.pet.name}`,
+        start: appointment.date_time,
+        duration: appointment.service_type.duration,
+        description: `Appointment with Dr. ${appointment.veterinarian.get_full_name} at ${appointment.clinic_branch.name}`,
+        location: appointment.clinic_branch.address
+    };
+    
+    // Generate Google Calendar link
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${event.start}/${event.end}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}`;
+    
+    window.open(googleCalendarUrl, '_blank');
+}
+</script>
+{% endblock %}

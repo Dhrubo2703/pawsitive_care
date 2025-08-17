@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ title }} - Pawsitive Care</title>
+{% extends 'accounts/base.html' %}
+
+{% block title %}Records{% endblock %}
+
+{% block content %}
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -160,4 +160,9 @@
       window.location.href = `/records/record/${recordId}/`;
     }
   }
+<<<<<<< HEAD
     </script>
+=======
+    </script>
+    {%endblock %}
+>>>>>>> 085ee6d73080e46e31c3330c02e9006ed2a4d67e
