@@ -6,7 +6,9 @@ from django.views import View
 from django.views.generic import CreateView, UpdateView
 from django.contrib import messages
 
-from .forms import CustomUserCreationForm, CustomAuthenticationForm, ProfileUpdateForm
+from .forms import CustomUserCreationForm, CustomAuthenticationForm, ProfileUpdateForm, VeterinarianForm
+from .models import Veterinarian
+from appoinments.models import ClinicBranch
 from django.contrib.auth.views import LoginView, LogoutView
 from .decorators import (
     admin_required, vet_required, staff_required, 
@@ -64,6 +66,23 @@ def profile_view(request):
         form = ProfileUpdateForm(instance=request.user)
     return render(request, 'accounts/profile.html', {'form': form})
 
+@admin_required
+def add_veterinarian(request):
+    if request.method == 'POST':
+        form = VeterinarianForm(request.POST)
+        if form.is_valid():
+            try:
+                veterinarian = form.save()
+                messages.success(request, f'Veterinarian {veterinarian.user.username} added successfully!')
+                return redirect('accounts:admin_dashboard')
+            except Exception as e:
+                messages.error(request, f'Error creating veterinarian: {str(e)}')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = VeterinarianForm()
+
+    return render(request, 'accounts/add_veterinarian.html', {'form': form})
 
 # Role-based Dashboard Views
 @admin_required
@@ -157,6 +176,7 @@ def admin_dashboard(request):
     return render(request, 'accounts/admin_dashboard.html', context)
 
 
+@vet_required
 @vet_required
 def vet_dashboard(request):
     # Import inventory models
@@ -261,7 +281,16 @@ def staff_dashboard(request):
 
 
 @login_required
+@login_required
 def client_dashboard(request):
+    # Redirect non-clients to their appropriate dashboards
+    if request.user.is_admin():
+        return redirect('accounts:admin_dashboard')
+    elif request.user.is_vet():
+        return redirect('accounts:vet_dashboard')
+    elif request.user.is_staff_member():
+        return redirect('accounts:staff_dashboard')
+    
     context = {
         'title': 'Client Dashboard',
         'user_role': 'Client'
