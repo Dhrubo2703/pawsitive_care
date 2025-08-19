@@ -1,0 +1,135 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Schedule - Pawsitive Care{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Calendar Navigation -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="btn-group">
+                                <a href="?view=day&date={{ current_date|date:'Y-m-d' }}" 
+                                   class="btn btn-outline-primary {% if view_type == 'day' %}active{% endif %}">
+                                    Day
+                                </a>
+                                <a href="?view=week&date={{ current_date|date:'Y-m-d' }}" 
+                                   class="btn btn-outline-primary {% if view_type == 'week' %}active{% endif %}">
+                                    Week
+                                </a>
+                                <a href="?view=month&date={{ current_date|date:'Y-m-d' }}" 
+                                   class="btn btn-outline-primary {% if view_type == 'month' %}active{% endif %}">
+                                    Month
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h4 class="mb-0">
+                                {% if view_type == 'day' %}
+                                    {{ current_date|date:"F d, Y" }}
+                                {% elif view_type == 'week' %}
+                                    Week of {{ current_date|date:"F d, Y" }}
+                                {% else %}
+                                    {{ current_date|date:"F Y" }}
+                                {% endif %}
+                            </h4>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group">
+                                <a href="?view={{ view_type }}&date={{ prev_date|date:'Y-m-d' }}" 
+                                   class="btn btn-outline-secondary">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                                <a href="?view={{ view_type }}&date={{ today|date:'Y-m-d' }}" 
+                                   class="btn btn-outline-secondary">
+                                    Today
+                                </a>
+                                <a href="?view={{ view_type }}&date={{ next_date|date:'Y-m-d' }}" 
+                                   class="btn btn-outline-secondary">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointments List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check"></i> Appointments</h5>
+                </div>
+                <div class="card-body">
+                    {% if appointments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Pet</th>
+                                    <th>Owner</th>
+                                    <th>Purpose</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in appointments %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ appointment.date|date:"M d" }}</strong><br>
+                                        {{ appointment.time|time:"g:i A" }}
+                                    </td>
+                                    <td>
+                                        {{ appointment.pet.name }}<br>
+                                        <small class="text-muted">{{ appointment.pet.get_species_display }}</small>
+                                    </td>
+                                    <td>{{ appointment.client.get_full_name }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ appointment.get_appointment_type_display }}</span>
+                                    </td>
+                                    <td>
+                                        {% if appointment.status == 'SCHEDULED' %}
+                                        <span class="badge bg-info">Scheduled</span>
+                                        {% elif appointment.status == 'COMPLETED' %}
+                                        <span class="badge bg-success">Completed</span>
+                                        {% elif appointment.status == 'PENDING' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if appointment.status == 'SCHEDULED' %}
+                                        <form method="post" action="{% url 'appointments:update_status' appointment.appointment_id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" name="status" value="COMPLETED" class="btn btn-success btn-sm">
+                                                <i class="fas fa-check"></i> Complete
+                                            </button>
+                                            <button type="submit" name="status" value="PENDING" class="btn btn-warning btn-sm">
+                                                <i class="fas fa-times"></i> Cancel
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-0">No appointments scheduled for this period</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Submit Feedback{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h1 class="h4 mb-0">Rate Your Experience</h1>
+                    <a href="{% url 'appointments:appointment_summary' appointment.id %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-left"></i> Back to Summary
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Appointment Info -->
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex align-items-center">
+                            {% if appointment.pet.photo %}
+                                <img src="{{ appointment.pet.photo.url }}" alt="{{ appointment.pet.name }}"
+                                     class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                            {% endif %}
+                            <div>
+                                <h6 class="alert-heading mb-1">Appointment Details</h6>
+                                <p class="mb-0">
+                                    {{ appointment.pet.name }}'s {{ appointment.service_type.name }} with 
+                                    Dr. {{ appointment.veterinarian.get_full_name }} on 
+                                    {{ appointment.date_time|date:"F j, Y P" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Overall Rating -->
+                        <div class="mb-4">
+                            <h5>Overall Experience</h5>
+                            <div class="rating-stars" data-rating-input="rating">
+                                {% for i in "12345" %}
+                                    <i class="far fa-star fa-2x" data-rating="{{ forloop.counter }}"></i>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="rating" required>
+                        </div>
+
+                        <!-- Veterinarian Rating -->
+                        <div class="mb-4">
+                            <h5>Rate Your Veterinarian</h5>
+                            <p class="text-muted">Dr. {{ appointment.veterinarian.get_full_name }}</p>
+                            <div class="rating-stars" data-rating-input="vet_rating">
+                                {% for i in "12345" %}
+                                    <i class="far fa-star fa-2x" data-rating="{{ forloop.counter }}"></i>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="vet_rating" required>
+                        </div>
+
+                        <!-- Clinic Rating -->
+                        <div class="mb-4">
+                            <h5>Clinic Environment</h5>
+                            <p class="text-muted">{{ appointment.clinic_branch.name }}</p>
+                            <div class="rating-stars" data-rating-input="clinic_rating">
+                                {% for i in "12345" %}
+                                    <i class="far fa-star fa-2x" data-rating="{{ forloop.counter }}"></i>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="clinic_rating" required>
+                        </div>
+
+                        <!-- Service Rating -->
+                        <div class="mb-4">
+                            <h5>Service Quality</h5>
+                            <p class="text-muted">{{ appointment.service_type.name }}</p>
+                            <div class="rating-stars" data-rating-input="service_rating">
+                                {% for i in "12345" %}
+                                    <i class="far fa-star fa-2x" data-rating="{{ forloop.counter }}"></i>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="service_rating" required>
+                        </div>
+
+                        <!-- Comments -->
+                        <div class="mb-4">
+                            <h5>Additional Comments</h5>
+                            <textarea name="comments" class="form-control" rows="4" 
+                                      placeholder="Share your experience and suggestions..."></textarea>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Submit Feedback
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all rating components
+    document.querySelectorAll('.rating-stars').forEach(container => {
+        const stars = container.querySelectorAll('.fa-star');
+        const inputName = container.dataset.ratingInput;
+        const hiddenInput = document.querySelector(`input[name="${inputName}"]`);
+        
+        function updateStars(rating) {
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('far');
+                    star.classList.add('fas', 'text-warning');
+                } else {
+                    star.classList.remove('fas', 'text-warning');
+                    star.classList.add('far');
+                }
+            });
+        }
+
+        stars.forEach(star => {
+            // Hover effect
+            star.addEventListener('mouseenter', () => {
+                updateStars(star.dataset.rating);
+            });
+
+            // Click handler
+            star.addEventListener('click', () => {
+                hiddenInput.value = star.dataset.rating;
+                updateStars(star.dataset.rating);
+            });
+        });
+
+        // Reset on mouse leave if no rating selected
+        container.addEventListener('mouseleave', () => {
+            if (!hiddenInput.value) {
+                updateStars(0);
+            } else {
+                updateStars(hiddenInput.value);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.rating-stars {
+    display: inline-block;
+    cursor: pointer;
+}
+
+.rating-stars i {
+    margin-right: 5px;
+    transition: all 0.2s;
+}
+
+.rating-stars i:hover {
+    transform: scale(1.1);
+}
+
+.alert-info {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+    color: #495057;
+}
+</style>
+{% endblock %}

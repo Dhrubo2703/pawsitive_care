@@ -1,0 +1,225 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Sidebar -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Filter Appointments</h5>
+                    <form method="get">
+                        <div class="form-group">
+                            <label>Date Range</label>
+                            <select name="date_filter" class="form-control" onchange="this.form.submit()">
+                                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                                <option value="week" {% if date_filter == 'week' %}selected{% endif %}>This Week</option>
+                                <option value="month" {% if date_filter == 'month' %}selected{% endif %}>This Month</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Emergency Appointments Section -->
+            {% if emergency_appointments %}
+            <div class="card mt-3 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Emergency Appointments</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for appointment in emergency_appointments %}
+                        <a href="#" class="list-group-item list-group-item-action" data-toggle="modal" data-target="#appointmentModal{{ appointment.id }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ appointment.pet.name }}</h6>
+                                <small>{{ appointment.date_time|time }}</small>
+                            </div>
+                            <p class="mb-1">{{ appointment.notes|truncatechars:50 }}</p>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title float-left">Appointments</h4>
+                    <div class="float-right">
+                        <span class="badge badge-primary">Pending: {{ appointments|length }}</span>
+                        <span class="badge badge-danger">Overdue: {{ overdue_appointments|length }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Pet</th>
+                                    <th>Owner</th>
+                                    <th>Service</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in appointments %}
+                                <tr class="{% if appointment.status == 'urgent' %}table-danger{% endif %}">
+                                    <td>{{ appointment.date_time|time }}</td>
+                                    <td>
+                                        <strong>{{ appointment.pet.name }}</strong><br>
+                                        <small>{{ appointment.pet.species }} - {{ appointment.pet.breed }}</small>
+                                    </td>
+                                    <td>{{ appointment.pet.owner.get_full_name }}</td>
+                                    <td>{{ appointment.service_type }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ appointment.get_status_color }}">
+                                            {{ appointment.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
+                                                Actions
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                {% if appointment.status == 'pending' or appointment.status == 'urgent' %}
+                                                <a class="dropdown-item" href="{% url 'complete_appointment' appointment.id %}">
+                                                    <i class="fas fa-check"></i> Complete
+                                                </a>
+                                                <a class="dropdown-item" href="{% url 'reschedule_appointment' appointment.id %}">
+                                                    <i class="fas fa-calendar-alt"></i> Reschedule
+                                                </a>
+                                                <a class="dropdown-item" href="{% url 'refer_appointment' appointment.id %}">
+                                                    <i class="fas fa-share"></i> Refer
+                                                </a>
+                                                <div class="dropdown-divider"></div>
+                                                <a class="dropdown-item text-danger" href="{% url 'cancel_appointment' appointment.id %}">
+                                                    <i class="fas fa-times"></i> Cancel
+                                                </a>
+                                                <a class="dropdown-item text-warning" href="#" onclick="markNoShow('{{ appointment.id }}')">
+                                                    <i class="fas fa-user-times"></i> No Show
+                                                </a>
+                                                {% endif %}
+                                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#appointmentModal{{ appointment.id }}">
+                                                    <i class="fas fa-info-circle"></i> Details
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No appointments found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Appointment Details Modals -->
+{% for appointment in appointments %}
+<div class="modal fade" id="appointmentModal{{ appointment.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Appointment Details</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Pet Information</h6>
+                        <p>
+                            <strong>Name:</strong> {{ appointment.pet.name }}<br>
+                            <strong>Species:</strong> {{ appointment.pet.species }}<br>
+                            <strong>Breed:</strong> {{ appointment.pet.breed }}<br>
+                            <strong>Age:</strong> {{ appointment.pet.age }} years
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Owner Information</h6>
+                        <p>
+                            <strong>Name:</strong> {{ appointment.pet.owner.get_full_name }}<br>
+                            <strong>Phone:</strong> {{ appointment.pet.owner.phone }}<br>
+                            <strong>Email:</strong> {{ appointment.pet.owner.email }}
+                        </p>
+                    </div>
+                </div>
+                <hr>
+                <h6>Appointment Details</h6>
+                <p>
+                    <strong>Date & Time:</strong> {{ appointment.date_time }}<br>
+                    <strong>Service:</strong> {{ appointment.service_type }}<br>
+                    <strong>Status:</strong> {{ appointment.status }}<br>
+                    <strong>Notes:</strong> {{ appointment.notes|default:"No notes" }}
+                </p>
+                {% if appointment.treatment_notes %}
+                <hr>
+                <h6>Treatment Information</h6>
+                <p>
+                    <strong>Treatment Notes:</strong> {{ appointment.treatment_notes }}<br>
+                    <strong>Diagnosis:</strong> {{ appointment.diagnosis|default:"No diagnosis" }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- No Show Form Modal -->
+<div class="modal fade" id="noShowModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mark as No Show</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="noShowForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea name="notes" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Mark as No Show</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function markNoShow(appointmentId) {
+        $('#noShowForm').attr('action', `/appointments/${appointmentId}/no-show/`);
+        $('#noShowModal').modal('show');
+    }
+    
+    // Initialize tooltips
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
+{% endblock %}

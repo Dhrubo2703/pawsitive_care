@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reschedule Appointment{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h1 class="h4 mb-0">Reschedule Appointment</h1>
+                    <a href="{% url 'appointments:appointment_summary' appointment.id %}" class="btn btn-outline-dark btn-sm">
+                        <i class="fas fa-arrow-left"></i> Back to Summary
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Current Appointment Info -->
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Current Appointment</h5>
+                        <p class="mb-0">
+                            <strong>Pet:</strong> {{ appointment.pet.name }}<br>
+                            <strong>Service:</strong> {{ appointment.service_type.name }}<br>
+                            <strong>Veterinarian:</strong> Dr. {{ appointment.veterinarian.get_full_name }}<br>
+                            <strong>Current Date & Time:</strong> {{ appointment.date_time|date:"F j, Y P" }}
+                        </p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h5>Select New Date & Time</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <input type="text" name="date_time" id="dateTimePicker" 
+                                           class="form-control" placeholder="Select new date and time" required>
+                                </div>
+                                <div class="col-md-6" id="availableSlots">
+                                    <!-- Available slots will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button type="button" class="btn btn-outline-secondary" 
+                                    onclick="window.history.back()">Cancel</button>
+                            <button type="submit" class="btn btn-warning">
+                                Confirm Reschedule
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Rescheduling Policy -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Rescheduling Policy</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-clock text-warning me-2"></i>
+                            Reschedule at least 24 hours before appointment
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-calendar-check text-warning me-2"></i>
+                            One free reschedule per appointment
+                        </li>
+                        <li>
+                            <i class="fas fa-info-circle text-warning me-2"></i>
+                            Subject to veterinarian availability
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date picker
+        flatpickr("#dateTimePicker", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            minDate: "today",
+            minTime: "09:00",
+            maxTime: "17:00",
+            disable: [
+                function(date) {
+                    return (date.getDay() === 0 || date.getDay() === 6);
+                }
+            ],
+            onChange: function(selectedDates, dateStr, instance) {
+                updateAvailableSlots(dateStr.split(' ')[0]);
+            }
+        });
+
+        function updateAvailableSlots(date) {
+            fetch(`{% url 'appointments:get_available_slots' %}?vet_id={{ appointment.veterinarian.id }}&date=${date}`)
+                .then(response => response.json())
+                .then(data => {
+                    const slotsContainer = document.getElementById('availableSlots');
+                    slotsContainer.innerHTML = data.slots.map(slot => 
+                        `<button type="button" class="btn btn-outline-warning m-1" onclick="selectSlot('${slot}')">
+                            ${slot}
+                        </button>`
+                    ).join('');
+                });
+        }
+    });
+
+    function selectSlot(time) {
+        const date = document.getElementById('dateTimePicker').value.split(' ')[0];
+        document.getElementById('dateTimePicker').value = `${date} ${time}`;
+    }
+</script>
+{% endblock %}

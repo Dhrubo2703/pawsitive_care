@@ -1,0 +1,190 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}
+{% if appointment %}Edit{% else %}Create{% endif %} Appointment - Pawsitive Care
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4>
+                        <i class="fas fa-calendar-plus"></i> 
+                        {% if appointment %}Edit{% else %}Create New{% endif %} Appointment
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Client Selection -->
+                        {% if appointment %}
+                            <!-- For reassignment, keep client and pet in hidden fields -->
+                            <input type="hidden" name="client" value="{{ appointment.client.id }}">
+                            <input type="hidden" name="pet" value="{{ appointment.pet.id }}">
+                            <div class="mb-3">
+                                <label class="form-label">Client</label>
+                                <input type="text" class="form-control" value="{{ appointment.client.get_full_name }}" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Pet</label>
+                                <input type="text" class="form-control" value="{{ appointment.pet.name }} ({{ appointment.pet.get_species_display }})" disabled>
+                            </div>
+                        {% else %}
+                            <!-- For new appointments, show selection dropdowns -->
+                            <div class="mb-3">
+                                <label for="client" class="form-label">Client</label>
+                                <select name="client" id="client" class="form-control" required>
+                                    <option value="">Select client...</option>
+                                    {% for client in clients %}
+                                    <option value="{{ client.id }}">
+                                        {{ client.get_full_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="pet" class="form-label">Pet</label>
+                                <select name="pet" id="pet" class="form-control" required>
+                                    <option value="">Select pet...</option>
+                                </select>
+                            </div>
+                        {% endif %}
+
+                        <!-- Vet Selection -->
+                        <div class="mb-3">
+                            <label for="vet" class="form-label">Veterinarian</label>
+                            <select name="vet" id="vet" class="form-control" required>
+                                <option value="">Select veterinarian...</option>
+                                {% for vet in vets %}
+                                <option value="{{ vet.id }}"
+                                        {% if appointment and appointment.vet.id == vet.id %}selected{% endif %}>
+                                    Dr. {{ vet.get_full_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Date and Time -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="date" class="form-label">Date</label>
+                                    <input type="date" name="date" id="date" class="form-control" required
+                                           min="{{ today|date:'Y-m-d' }}"
+                                           value="{% if appointment %}{{ appointment.date|date:'Y-m-d' }}{% endif %}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="time" class="form-label">Time</label>
+                                    <input type="time" name="time" id="time" class="form-control" required
+                                           value="{% if appointment %}{{ appointment.time|time:'H:i' }}{% endif %}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea name="notes" id="notes" class="form-control" rows="3">{% if appointment %}{{ appointment.notes }}{% endif %}</textarea>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if appointment %}Update{% else %}Create{% endif %} Appointment
+                            </button>
+                            <a href="{% url 'appointments:staff_calendar' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clientSelect = document.getElementById('client');
+    const petSelect = document.getElementById('pet');
+
+    // Initially disable pet select
+    petSelect.disabled = true;
+
+    clientSelect.addEventListener('change', function() {
+        const clientId = this.value;
+        if (clientId) {
+            // Clear and disable pet select while loading
+            petSelect.innerHTML = '<option value="">Loading pets...</option>';
+            petSelect.disabled = true;
+
+            // Fetch client's pets
+            fetch(`/appointments/get-client-pets/${clientId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    // Clear loading message
+                    petSelect.innerHTML = '<option value="">Select pet...</option>';
+                    
+                    // Add pet options
+                    data.pets.forEach(pet => {
+                        const option = document.createElement('option');
+                        option.value = pet.id;
+                        option.textContent = `${pet.name} (${pet.species})`;
+                        petSelect.appendChild(option);
+                    });
+                    
+                    // Enable pet select
+                    petSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    petSelect.innerHTML = '<option value="">Error loading pets</option>';
+                    petSelect.disabled = true;
+                });
+        } else {
+            // Reset pet select if no client is selected
+            petSelect.innerHTML = '<option value="">Select pet...</option>';
+            petSelect.disabled = true;
+        }
+    });
+});
+</script>
+{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('client').addEventListener('change', function() {
+    const clientId = this.value;
+    if (clientId) {
+        // Fetch pets for selected client
+        fetch(`/api/clients/${clientId}/pets/`)
+            .then(response => response.json())
+            .then(pets => {
+                const petSelect = document.getElementById('pet');
+                petSelect.innerHTML = '<option value="">Select pet...</option>';
+                pets.forEach(pet => {
+                    petSelect.innerHTML += `
+                        <option value="${pet.id}">
+                            ${pet.name} (${pet.species})
+                        </option>
+                    `;
+                });
+            });
+    }
+});
+</script>
+{% endblock %}

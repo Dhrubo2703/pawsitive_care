@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'accounts',
     'pets',
     'petmedia',
-    'appoinments',
+    'appointments',
     'billing',
     'communication',
     'inventory',

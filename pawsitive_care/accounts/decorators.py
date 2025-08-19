@@ -51,6 +51,21 @@ def admin_required(view_func):
 
 
 def vet_required(view_func):
+    """Decorator to require vet role"""
+    return role_required('vet')(view_func)
+
+
+def staff_required(view_func):
+    """Decorator to require staff role"""
+    return role_required('staff')(view_func)
+
+
+def client_required(view_func):
+    """Decorator to require client role"""
+    return role_required('client')(view_func)
+
+
+def vet_required(view_func):
     """Decorator to require veterinarian role"""
     return role_required('vet')(view_func)
 
